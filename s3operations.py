@@ -16,25 +16,25 @@ def create_bucket(bucket_name):
             }
         )
 
-##def create_bucket_policy():
-##    bucket_policy = {
-##        "Vesrion": "2012-10-17",
-##        "Statement":[
-##            {
-##            "Sid": "AddPerm",
-##            "Effect": "Allow",
-##            "Principal": "*",
-##            "Action":["s3:*"],
-##            "Resource":["arn:aws:s3:::patricksbucket/*"]
-##            }
-##        ]
-##    }
-##    policy_string = json.dumps(bucket_policy)
-##    
-##    return s3_client().put_bucket_policy(
-##        Bucket=BUCKET_NAME,
-##        Policy=policy_string
-##    )
+def create_bucket_policy():
+    bucket_policy = {
+        "Version": "2012-10-17",
+        "Statement":[
+            {
+            "Sid": "AddPerm",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action":["s3:*"],
+            "Resource":["arn:aws:s3:::patricksbucket/*"]
+            }
+        ]
+    }
+    policy_string = json.dumps(bucket_policy)
+    
+    return s3_client().put_bucket_policy(
+        Bucket=BUCKET_NAME,
+        Policy=policy_string
+    )
 if __name__ == '__main__':
     print(create_bucket(BUCKET_NAME))
     #print(create_bucket_policy())
