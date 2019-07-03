@@ -1,7 +1,7 @@
 import boto3
 import json
 
-BUCKET_NAME ='patrick-s3-2018-bucket'
+BUCKET_NAME ='patrick-s3-bucket'
 
 def s3_client():
     s3 = boto3.client('s3')
@@ -25,7 +25,7 @@ def create_bucket_policy():
             "Effect": "Allow",
             "Principal": "*",
             "Action":["s3:*"],
-            "Resource":["arn:aws:s3:::patricksbucket/*"]
+            "Resource":["arn:aws:s3:::patrick-s3-bucket/*"]
             }
         ]
     }
@@ -39,8 +39,9 @@ def list_buckets():
     return s3_client().list_buckets()
 
 def get_bucket_policy():
-    return s3_client().get_bucket_policy(Bucket='patrick-s3-2018-bucket')
+    return s3_client().get_bucket_policy(Bucket=BUCKET_NAME)
 
 #was not working
 if __name__ == '__main__':
     print(get_bucket_policy())
+    
