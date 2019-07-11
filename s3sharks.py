@@ -52,7 +52,7 @@ for n in shark:
             (place, date, article))
 c.commit()
 '''
-Read into python
+Read into python [pandas] df
 '''
 df = pd.read_sql_query("select * from mytable;",c)
 df.set_index('Location', inplace=True)
@@ -61,6 +61,14 @@ df.set_index('Location', inplace=True)
 
 c.close()
 
+
+'''
+Store data into excel file that I will upload to S3 so others on team can acess
+it
+'''
+writer = pd.ExcelWriter('sharksxlsx.xlsx', engine='xlsxwriter')
+df.to_excel(writer, sheet_name='Sheet1')
+writer.save()
 '''
 Create bucket in S3, needs to be updated as of 7.9 not quite there
 '''
@@ -103,8 +111,8 @@ def create_bucket_policy():
 
 
 def upload_small_file():
-    file_path = os.path.dirname(__file__)+ '/shark.db'
-    return s3_client().upload_file(file_path, BUCKET_NAME, 'shark.db')
+    file_path = os.path.dirname(__file__)+ '/sharksxlsx.xlsx'
+    return s3_client().upload_file(file_path, BUCKET_NAME, 'sharksxlsx.xlsx')
 
 def upload_large_file():
     config = TransferConfig(multipart_threshold=1024 * 25, max_concurrency=10,
