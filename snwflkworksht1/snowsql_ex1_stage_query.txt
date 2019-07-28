@@ -1,0 +1,90 @@
+//DB and table required beofre you can load data lets create a db , table virtual warehouse on the command line via SnowSQL
+
+
+create or replace database sf_tuts;
+
+//let's check out the schema
+
+
+select current_database(), current_schema();
+
+//Ah, since its snowlflake the default schema is named public
+
+
+create or replace table emp_basic (
+  first_name string ,
+  last_name string ,
+  email string ,
+  streetaddress string ,
+  city string ,
+  start_date date
+  );
+
+// created our first table, note to self the response looks like this in SnowSQL cli
+
+//
+
++---------------------------------------+
+| status                                |
+|---------------------------------------|
+| Table EMP_BASIC successfully created. |
++---------------------------------------+
+
+//create a warehouse
+
+create or replace warehouse sf_tuts_wh with
+  warehouse_size='X-small'
+  auto_suspend = 180
+  auto_resume = true
+  initially_suspended=true;
+
+//upload local data files to the table stage provided
+
+put file:C:\Users\Patrick\githubb\aws\snwflkworksht1\getting-started\employees0*.csv @sf_tuts.public.%emp_basic;
+
+// above, we specify dir/path and indicate stage for specified table and compressess file using gzip
+
+//let's see the specific files we staged:
+
+
+list @sf_tuts.public.%emp_basic;
+
+//let's load y staged data into the target table
+//we identify the internal stage location(i.e. from..), the file_format specifies csv type, instruct to skip any error files
+
+
+
+//let's explore and query input data :)
+select * from emp_basic;
+
+//let's insert more rows, and practice various queries !
+
+// nice little output
++-------------------------+
+| number of rows inserted |
+|-------------------------|
+|                       2 |
++-------------------------+
+// more practice
+
+select email from emp_basic where email like '%.uk';
+
+select first_name, last_name, dateadd('day',90,start_date) from emp_basic where start_date <= '2017-01-01';
+
+
++------------+-----------+------------------------------+
+| FIRST_NAME | LAST_NAME | DATEADD('DAY',90,START_DATE) |
+|------------+-----------+------------------------------|
+| Granger    | Bassford  | 2017-03-30                   |
+| Catherin   | Devereu   | 2017-03-17                   |
+| Cesar      | Hovie     | 2017-03-21                   |
+| Wallis     | Sizey     | 2017-03-30                   |
++------------+-----------+------------------------------+
+
+//now if I want to drop the table to return system to its state before my excersize
+
+drop database if exists sf_tuts;
+
+drop warehouse if exists sf_tuts_wh;
+
+
