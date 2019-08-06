@@ -1,0 +1,299 @@
+ATRICK#COMPUTE_WH@(no database).(no schema)>
+                                            /* Create target tables for CSV an
+                                            d JSON data. The tables are tempor
+                                            ary, meaning they persist only for
+                                             the duration of the user session
+                                            and are not visible to other users
+                                            . */
+
+                                            create or replace temporary table
+                                            mycsvtable (
+                                              id integer,
+                                              last_name string,
+                                              first_name string,
+                                              company string,
+                                              email string,
+                                              workphone string,
+                                              cellphone string,
+                                              streetaddress string,
+                                              city string,
+                                              postalcode string);
+
+                                            create or replace temporary table
+                                            myjsontable (
+                                              json_data variant);
+
+
+-------------------------------------------+
+ status                                    |
+-------------------------------------------|
+ Database MYDATABASE successfully created. |
+-------------------------------------------+
+ Row(s) produced. Time Elapsed: 0.588s
+
+----------------------------------------+
+ status                                 |
+----------------------------------------|
+ Table MYCSVTABLE successfully created. |
+----------------------------------------+
+ Row(s) produced. Time Elapsed: 0.264s
+
+-----------------------------------------+
+ status                                  |
+-----------------------------------------|
+ Table MYJSONTABLE successfully created. |
+-----------------------------------------+
+ Row(s) produced. Time Elapsed: 0.310s
+ATRICK#COMPUTE_WH@MYDATABASE.PUBLIC>create or replace warehouse mywarehouse wi
+                                    th
+                                      warehouse_size='X-SMALL'
+                                      auto_suspend = 120
+                                      auto_resume = true
+                                      initially_suspended=true;
+
+---------------------------------------------+
+ status                                      |
+---------------------------------------------|
+ Warehouse MYWAREHOUSE successfully created. |
+---------------------------------------------+
+ Row(s) produced. Time Elapsed: 0.313s
+ATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>create or replace file format mycsvformat
+
+                                       type = 'CSV'
+                                       field_delimiter = '|'
+                                       skip_header = 1;
+
+-----------------------------------------------+
+ status                                        |
+-----------------------------------------------|
+ File format MYCSVFORMAT successfully created. |
+-----------------------------------------------+
+ Row(s) produced. Time Elapsed: 0.246s
+ATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>create or replace file format myjsonforma
+                                     t
+                                       type = 'JSON'
+                                       strip_outer_array = true;
+
+------------------------------------------------+
+ status                                         |
+------------------------------------------------|
+ File format MYJSONFORMAT successfully created. |
+------------------------------------------------+
+ Row(s) produced. Time Elapsed: 0.301s
+ATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>create or replace stage my_csv_stage
+                                       file_format = mycsvformat
+                                       url = 's3://snowflake-docs';
+
+-----------------------------------------------+
+ status                                        |
+-----------------------------------------------|
+ Stage area MY_CSV_STAGE successfully created. |
+-----------------------------------------------+
+ Row(s) produced. Time Elapsed: 0.797s
+ATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>create or replace stage my_json_stage
+                                       file_format = myjsonformat
+                                       url = 's3://snowflake-docs';
+
+------------------------------------------------+
+ status                                         |
+------------------------------------------------|
+ Stage area MY_JSON_STAGE successfully created. |
+------------------------------------------------+
+ Row(s) produced. Time Elapsed: 0.804s
+ATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>create or replace stage external_stage
+                                       file_format = mycsvformat
+                                       url = 's3://private-bucket'
+                                       credentials = (aws_key_id='1a2b3c' aws_
+                                     secret_key='1a2b3c');
+
+-------------------------------------------------+
+ status                                          |
+-------------------------------------------------|
+ Stage area EXTERNAL_STAGE successfully created. |
+-------------------------------------------------+
+ Row(s) produced. Time Elapsed: 0.727s
+ATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>copy into mycsvtable
+                                       from @my_csv_stage/tutorials/dataloadin
+                                     g/contacts1.csv
+                                       on_error = 'skip_file';
+
+---------------------------------------------------------+--------+------------
++-------------+-------------+-------------+-------------+------------------+---
+-------------------+-------------------------+
+ file                                                    | status | rows_parsed
+| rows_loaded | error_limit | errors_seen | first_error | first_error_line | fi
+st_error_character | first_error_column_name |
+---------------------------------------------------------+--------+------------
++-------------+-------------+-------------+-------------+------------------+---
+-------------------+-------------------------|
+ s3://snowflake-docs/tutorials/dataloading/contacts1.csv | LOADED |           5
+|           5 |           1 |           0 | NULL        |             NULL |
+              NULL | NULL                    |
+---------------------------------------------------------+--------+------------
++-------------+-------------+-------------+-------------+------------------+---
+-------------------+-------------------------+
+ Row(s) produced. Time Elapsed: 2.904s
+ATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>copy into mycsvtable
+                                       from @my_csv_stage/tutorials/dataloadin
+                                     g/
+                                       pattern='.*contacts[1-5].csv'
+                                       on_error = 'skip_file';
+
+---------------------------------------------------------+-------------+-------
+-----+-------------+-------------+-------------+-------------------------------
+-------------------------------------------------------------------------------
+------------------------------------------------------+------------------+-----
+-----------------+-------------------------+
+ file                                                    | status      | rows_p
+rsed | rows_loaded | error_limit | errors_seen | first_error
+
+                                                      | first_error_line | firs
+_error_character | first_error_column_name |
+---------------------------------------------------------+-------------+-------
+-----+-------------+-------------+-------------+-------------------------------
+-------------------------------------------------------------------------------
+------------------------------------------------------+------------------+-----
+-----------------+-------------------------|
+ s3://snowflake-docs/tutorials/dataloading/contacts5.csv | LOADED      |
+   6 |           6 |           1 |           0 | NULL
+
+                                                      |             NULL |
+            NULL | NULL                    |
+ s3://snowflake-docs/tutorials/dataloading/contacts4.csv | LOADED      |
+   5 |           5 |           1 |           0 | NULL
+
+                                                      |             NULL |
+            NULL | NULL                    |
+ s3://snowflake-docs/tutorials/dataloading/contacts2.csv | LOADED      |
+   5 |           5 |           1 |           0 | NULL
+
+                                                      |             NULL |
+            NULL | NULL                    |
+ s3://snowflake-docs/tutorials/dataloading/contacts3.csv | LOAD_FAILED |
+   5 |           0 |           1 |           2 | Number of columns in file (11)
+does not match that of the corresponding table (10), use file format option err
+r_on_column_count_mismatch=false to ignore this error |                3 |
+               1 | "MYCSVTABLE"[11]        |
+---------------------------------------------------------+-------------+-------
+-----+-------------+-------------+-------------+-------------------------------
+-------------------------------------------------------------------------------
+------------------------------------------------------+------------------+-----
+-----------------+-------------------------+
+ Row(s) produced. Time Elapsed: 2.298s
+ATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>copy into myjsontable
+                                       from @my_json_stage/tutorials/dataloadi
+                                     ng/contacts.json
+                                       on_error = 'skip_file';
+
+---------------------------------------------------------+--------+------------
++-------------+-------------+-------------+-------------+------------------+---
+-------------------+-------------------------+
+ file                                                    | status | rows_parsed
+| rows_loaded | error_limit | errors_seen | first_error | first_error_line | fi
+st_error_character | first_error_column_name |
+---------------------------------------------------------+--------+------------
++-------------+-------------+-------------+-------------+------------------+---
+-------------------+-------------------------|
+ s3://snowflake-docs/tutorials/dataloading/contacts.json | LOADED |           3
+|           3 |           1 |           0 | NULL        |             NULL |
+              NULL | NULL                    |
+---------------------------------------------------------+--------+------------
++-------------+-------------+-------------+-------------+------------------+---
+-------------------+-------------------------+
+ Row(s) produced. Time Elapsed: 1.923s
+ATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>create or replace table save_copy_errors
+                                     as select * from table(validate(mycsvtabl
+                                     e, job_id=>'018e0473-02a7-2102-0000-00008
+                                     895d0dd
+                                     '));
+
+
+02018 (22023): SQL compilation error:
+nvalid argument [Invalid Job UUID provided.] for table function. Table function
+argument is required to be a constant.
+ATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>select * from mycsvtable;
+
+
+----+-----------+------------+----------------------------------+--------------
+-------------------------+----------------+----------------+-------------------
+------------+------------------+------------+
+ ID | LAST_NAME | FIRST_NAME | COMPANY                          | EMAIL
+                         | WORKPHONE      | CELLPHONE      | STREETADDRESS
+            | CITY             | POSTALCODE |
+----+-----------+------------+----------------------------------+--------------
+-------------------------+----------------+----------------+-------------------
+------------+------------------+------------|
+  1 | Imani     | Davidson   | At Ltd                           | nec@sem.net
+                         | 1-243-889-8106 | 1-730-771-0412 | 369-6531 Molestie
+t.          | Russell          | 74398      |
+  2 | Kelsie    | Abbott     | Neque Sed Institute              | lacus@pede.ne
+                         | 1-467-506-9933 | 1-441-508-7753 | P.O. Box 548, 1930
+Pede. Road  | Campbellton      | 27022      |
+  3 | Hilel     | Durham     | Pede Incorporated                | eu@Craspellen
+esque.net                | 1-752-108-4210 | 1-391-449-8733 | Ap #180-2360 Nisl.
+Street      | Etalle           | 84025      |
+  4 | Graiden   | Molina     | Sapien Institute                 | sit@fermentum
+net                      | 1-130-156-6666 | 1-269-605-7776 | 8890 A, Rd.
+            | Dundee           | 70504      |
+  5 | Karyn     | Howard     | Pede Ac Industries               | sed.hendrerit
+ornaretortorat.edu       | 1-109-166-5492 | 1-506-782-5089 | P.O. Box 902, 5398
+Et, St.     | Saint-Hilarion   | 26232      |
+ 20 | Michelle  | Dickson    | Ut Limited                       | Duis.dignissi
+.tempor@cursuset.org     | 1-202-490-0151 | 1-129-553-7398 | 6752 Eros. St.
+            | Stornaway        | 61290      |
+ 21 | Lance     | Harper     | Rutrum Lorem Limited             | Sed.neque@ris
+s.com                    | 1-685-778-6726 | 1-494-188-6168 | 663-7682 Et St.
+            | Gisborne         | 73449      |
+ 22 | Keely     | Pace       | Eleifend Limited                 | ante.bibendum
+ullamcorper@necenim.edu  | 1-312-381-5244 | 1-432-225-9226 | P.O. Box 506, 5233
+Aliquam Av. | Woodlands County | 61213      |
+ 23 | Sage      | Leblanc    | Egestas A Consulting             | dapibus@eleme
+tum.org                  | 1-630-981-0327 | 1-301-287-0495 | 4463 Lorem Road
+            | Woodlands County | 33951      |
+ 24 | Marny     | Holt       | Urna Nec Luctus Associates       | ornare@vitaeo
+ci.ca                    | 1-522-364-3947 | 1-460-971-8360 | P.O. Box 311, 4839
+Nulla Av.   | Port Coquitlam   | 36733      |
+ 25 | Holly     | Park       | Mauris PC                        | Vestibulum.an
+e@Maecenasliberoest.org  | 1-370-197-9316 | 1-411-413-4602 | P.O. Box 732, 8967
+Eu Avenue   | Provost          | 45507      |
+ 16 | Aretha    | Sykes      | Lobortis Tellus Justo Foundation | eget@Naminter
+umenim.net               | 1-670-849-1866 | 1-283-783-3710 | Ap #979-2481 Dui.
+v.          | Thurso           | 66851      |
+ 17 | Akeem     | Casey      | Pharetra Quisque Ac Institute    | dictum.eu@mag
+a.edu                    | 1-277-657-0361 | 1-623-630-8848 | Ap #363-6074 Ullam
+orper, Rd.  | Idar-Oberstei    | 30848      |
+ 18 | Keelie    | Mendez     | Purus In Foundation              | Nulla.eu.nequ
+@Aeneanegetmetus.co.uk   | 1-330-370-8231 | 1-301-568-0413 | 3511 Tincidunt Str
+et          | Lanklaar         | 73942      |
+ 19 | Lane      | Bishop     | Libero At PC                     | non@dapibusli
+ula.ca                   | 1-340-862-4623 | 1-513-820-9039 | 7459 Pede. Street
+            | Linkebeek        | 89252      |
+ 20 | Michelle  | Dickson    | Ut Limited                       | Duis.dignissi
+.tempor@cursuset.org     | 1-202-490-0151 | 1-129-553-7398 | 6752 Eros. St.
+            | Stornaway        | 61290      |
+  6 | Reed      | Moses      | Neque Corporation                | eget.lacus@fa
+ilisis.com               | 1-449-871-0780 | 1-454-964-5318 | Ap #225-4351 Dolor
+Ave         | Titagarh         | 62631      |
+  7 | Audrey    | Franks     | Arcu Eu Limited                  | eu.dui@acelei
+endvitae.org             | 1-527-945-8935 | 1-263-127-1173 | Ap #786-9241 Mauri
+ Road       | Bergen           | 81958      |
+  8 | Jakeem    | Erickson   | A Ltd                            | Pellentesque.
+abitant@liberoProinmi.ca | 1-381-591-9386 | 1-379-391-9490 | 319-1703 Dis Rd.
+            | Pangnirtung      | 62399      |
+  9 | Xaviera   | Brennan    | Bibendum Ullamcorper Limited     | facilisi.Sed.
+eque@dictum.edu          | 1-260-757-1919 | 1-211-651-0925 | P.O. Box 146, 8385
+Vel Road    | Béziers          | 13082      |
+ 10 | Francis   | Ortega     | Vitae Velit Egestas Associates   | egestas.rhonc
+s.Proin@faucibus.com     | 1-257-584-6487 | 1-211-870-2111 | 733-7191 Neque Rd.
+            | Chatillon        | 33081      |
+----+-----------+------------+----------------------------------+--------------
+-------------------------+----------------+----------------+-------------------
+------------+------------------+------------+
+1 Row(s) produced. Time Elapsed: 1.646s
+ATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>
+
+
+
+
+
+

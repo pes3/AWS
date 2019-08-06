@@ -1,0 +1,74 @@
+PATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>copy into myjsontable
+                                        from @my_json_stage/tutorials/dataloadi
+                                      ng/contacts.json
+                                        on_error = 'skip_file';
+
++---------------------------------------------------------+--------+------------
+-+-------------+-------------+-------------+-------------+------------------+---
+--------------------+-------------------------+
+| file                                                    | status | rows_parsed
+ | rows_loaded | error_limit | errors_seen | first_error | first_error_line | fi
+rst_error_character | first_error_column_name |
+|---------------------------------------------------------+--------+------------
+-+-------------+-------------+-------------+-------------+------------------+---
+--------------------+-------------------------|
+| s3://snowflake-docs/tutorials/dataloading/contacts.json | LOADED |           3
+ |           3 |           1 |           0 | NULL        |             NULL |
+               NULL | NULL                    |
++---------------------------------------------------------+--------+------------
+-+-------------+-------------+-------------+-------------+------------------+---
+--------------------+-------------------------+
+1 Row(s) produced. Time Elapsed: 1.840s
+PATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>select * from myjsontable;
+
++-----------------------------------------------------------------+
+| JSON_DATA                                                       |
+|-----------------------------------------------------------------|
+| {                                                               |
+|   "customer": {                                                 |
+|     "_id": "5730864df388f1d653e37e6f",                          |
+|     "address": "509 Kings Hwy, Comptche, Missouri, 4848",       |
+|     "company": "ORBIN",                                         |
+|     "email": "blankenship.patrick@orbin.ca",                    |
+|     "name": {                                                   |
+|       "first": "Blankenship",                                   |
+|       "last": "Patrick"                                         |
+|     },                                                          |
+|     "phone": "+1 (999) 407-2274"                                |
+|   }                                                             |
+| }                                                               |
+| {                                                               |
+|   "customer": {                                                 |
+|     "_id": "5730864d4d8523c8baa8baf6",                          |
+|     "address": "290 Lefferts Avenue, Malott, Delaware, 1575",   |
+|     "company": "SNIPS",                                         |
+|     "email": "anna.glass@snips.name",                           |
+|     "name": {                                                   |
+|       "first": "Anna",                                          |
+|       "last": "Glass"                                           |
+|     },                                                          |
+|     "phone": "+1 (958) 411-2876"                                |
+|   }                                                             |
+| }                                                               |
+| {                                                               |
+|   "customer": {                                                 |
+|     "_id": "5730864e375e08523150fc04",                          |
+|     "address": "756 Randolph Street, Omar, Rhode Island, 3310", |
+|     "company": "ESCHOIR",                                       |
+|     "email": "sparks.ramos@eschoir.co.uk",                      |
+|     "name": {                                                   |
+|       "first": "Sparks",                                        |
+|       "last": "Ramos"                                           |
+|     },                                                          |
+|     "phone": "+1 (962) 436-2519"                                |
+|   }                                                             |
+| }                                                               |
++-----------------------------------------------------------------+
+3 Row(s) produced. Time Elapsed: 0.952s
+PATRICK#MYWAREHOUSE@MYDATABASE.PUBLIC>
+
+
+
+
+
+
